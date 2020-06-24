@@ -7,15 +7,15 @@ module array(
     output  logic [7:0] down_out[0:255]
     );
 
-    parameter ROW_NUMBER = 256;
-    parameter COLUMN_NUMBER = 256;
+    parameter ROW_NUMBER = 255;
+    parameter COLUMN_NUMBER = 255;
     genvar row, column, i;
 
-    wire [7:0]  w_column[ROW_NUMBER][COLUMN_NUMBER+1];
-    wire [7:0]  w_row[ROW_NUMBER+1][COLUMN_NUMBER];
+    wire [7:0]  w_column[0:ROW_NUMBER][0:COLUMN_NUMBER+1];
+    wire [7:0]  w_row[0:ROW_NUMBER+1][0:COLUMN_NUMBER];
 
     generate
-        for(row = 0; row < ROW_NUMBER; row = row + 1) begin: GenerateArray
+        for(row = 0; row < ROW_NUMBER+1; row = row + 1) begin: GenerateArray
             for(column = 0; column < COLUMN_NUMBER; column = column + 1) begin: GenerateVector
                 PE PE(.clk      (clk    ),
                       .reset    (reset  ),
@@ -28,10 +28,10 @@ module array(
             end
         end
 
-        for(i = 0; i < 256; i = i + 1) begin: AssignIO
+        for(i = 0; i < ROW_NUMBER+1; i = i + 1) begin: AssignIO
             assign w_row[0][i]     = top_in[i];
             assign w_column[i][0]  = left_in[i];
-            assign down_out[i]     = w_row[256][i];
+            assign down_out[i]     = w_row[ROW_NUMBER+1][i];
         end
     endgenerate
 endmodule
