@@ -49,4 +49,32 @@ module TOY_TPU #(
             done <= 1;
         end
     end
+
+    genvar i;
+
+    generate
+        always_ff @(posedge clk) begin
+            if(cnt == 1) begin
+                reset = 0;
+            end
+        end
+        for(i = 0; i < SIZE_MATRIX; i = i + 1) begin: GenerateInput
+            always_ff @(posedge clk) begin
+                if(((i+1) <= cnt) && (cnt <= (i+size_columnrow_AB))) begin
+                    top_in[i]   = A_cache[i][cnt - (i+1)];
+                    left_in[i]  = B_cache[i][cnt - (i+1)];
+                end else begin
+                    top_in[i]   = 0;
+                    left_in[i]  = 0;
+                end
+            end
+        end
+        always_ff @(posedge clk) begin
+            if(SIZE_MATRIX+size_columnrow_AB-1 < cnt) begin
+                through = 1;
+            end else begin
+                through = 0;
+            end
+        end
+    endgenerate
 endmodule
