@@ -13,11 +13,11 @@ module array #(
 
     genvar row, column, i;
 
-    wire [7:0]  w_column[0:ROW_NUMBER][0:COLUMN_NUMBER];
-    wire [7:0]  w_row[0:ROW_NUMBER][0:COLUMN_NUMBER-1];
+    logic [7:0]  w_column[0:ROW_NUMBER][0:COLUMN_NUMBER];
+    logic [7:0]  w_row[0:ROW_NUMBER][0:COLUMN_NUMBER-1];
 
     generate
-        for(row = 0; row < ROW_NUMBER+1; row = row + 1) begin: GenerateArray
+        for(row = 0; row < ROW_NUMBER; row = row + 1) begin: GenerateArray
             for(column = 0; column < COLUMN_NUMBER; column = column + 1) begin: GenerateVector
                 PE PE(.clk      (clk    ),
                       .reset    (reset  ),
