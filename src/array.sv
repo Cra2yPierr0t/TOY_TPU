@@ -14,7 +14,7 @@ module array #(
     genvar row, column, i;
 
     logic [7:0]  w_column[0:ROW_NUMBER][0:COLUMN_NUMBER];
-    logic [7:0]  w_row[0:ROW_NUMBER][0:COLUMN_NUMBER-1];
+    logic [7:0]  w_row[0:ROW_NUMBER][0:COLUMN_NUMBER];
 
     generate
         for(row = 0; row < ROW_NUMBER; row = row + 1) begin: GenerateArray
@@ -24,16 +24,16 @@ module array #(
                       .through  (through),
                       .top_in   (w_column[row][column]  ),
                       .left_in  (w_row[row][column]     ),
-                      .down_out (w_column[row][column+1]),
-                      .right_out(w_row[row+1][column]   )
+                      .down_out (w_column[row+1][column]),
+                      .right_out(w_row[row][column+1]   )
                     );
             end
         end
 
         for(i = 0; i < ROW_NUMBER; i = i + 1) begin: AssignIO
-            assign w_row[0][i]     = top_in[i];
-            assign w_column[i][0]  = left_in[i];
-            assign down_out[i]     = w_row[ROW_NUMBER][i];
+            assign w_column[0][i]   = top_in[i];
+            assign w_row[i][0]      = left_in[i];
+            assign down_out[i]      = w_column[ROW_NUMBER][i];
         end
     endgenerate
 endmodule
