@@ -1,18 +1,20 @@
-module array(
-    input   logic       clk,
-    input   logic       reset,
-    input   logic       through,
-    input   logic [7:0] top_in[0:255],
-    input   logic [7:0] left_in[0:255],
-    output  logic [7:0] down_out[0:255]
+module array #(
+        parameter ROW_NUMBER = 256,
+        parameter COLUMN_NUMBER = 256 
+    )(
+        input   logic       clk,
+        input   logic       reset,
+        input   logic       through,
+        input   logic [7:0] top_in[0:COLUMN_NUMBER-1],
+        input   logic [7:0] left_in[0:ROW_NUMBER-1],
+        output  logic [7:0] down_out[0:COLUMN_NUMBER-1]
     );
 
-    parameter ROW_NUMBER = 255;
-    parameter COLUMN_NUMBER = 255;
+
     genvar row, column, i;
 
-    wire [7:0]  w_column[0:ROW_NUMBER][0:COLUMN_NUMBER+1];
-    wire [7:0]  w_row[0:ROW_NUMBER+1][0:COLUMN_NUMBER];
+    wire [7:0]  w_column[0:ROW_NUMBER][0:COLUMN_NUMBER];
+    wire [7:0]  w_row[0:ROW_NUMBER][0:COLUMN_NUMBER-1];
 
     generate
         for(row = 0; row < ROW_NUMBER+1; row = row + 1) begin: GenerateArray
@@ -28,10 +30,10 @@ module array(
             end
         end
 
-        for(i = 0; i < ROW_NUMBER+1; i = i + 1) begin: AssignIO
+        for(i = 0; i < ROW_NUMBER; i = i + 1) begin: AssignIO
             assign w_row[0][i]     = top_in[i];
             assign w_column[i][0]  = left_in[i];
-            assign down_out[i]     = w_row[ROW_NUMBER+1][i];
+            assign down_out[i]     = w_row[ROW_NUMBER][i];
         end
     endgenerate
 endmodule
