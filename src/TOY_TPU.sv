@@ -1,10 +1,14 @@
-module TOY_TPU(
+module TOY_TPU #(
+        parameter   SIZE_MATRIX   = 4,
+        parameter   ROW_NUMBER    = 4,
+        parameter   COLUMN_NUMBER = 4
+    )(
         input   logic   clk
     );
 
-    wire [7:0] top_in[0:255];
-    wire [7:0] left_in[0:255];
-    wire [7:0] down_out[0:255];
+    wire [7:0] top_in[0:COLUMN_NUMBER-1];
+    wire [7:0] left_in[0:ROW_NUMBER-1];
+    wire [7:0] down_out[0:COLUMN_NUMBER-1];
 
     logic [7:0] size_row_A;
     logic [7:0] size_column_B;
@@ -16,10 +20,16 @@ module TOY_TPU(
     logic reset;
     logic through;
 
-    array array(
+    logic [7:0] A_cache[0:ROW_NUMBER-1][0:COLUMN_NUMBER-1];
+    logic [7:0] B_cache[0:SIZE_MATRIX-1][0:COLUMN_NUMBER-1];
+
+    array #(
+            .ROW_NUMBER     (ROW_NUMBER     ),
+            .COLUMN_NUMBER  (COLUMN_NUMBER  )
+        ) array (
             .clk        (clk        ),
-            .reset      (),
-            .through    (),
+            .reset      (reset      ),
+            .through    (through    ),
             .top_in     (top_in     ),
             .left_in    (left_in    ),
             .down_out   (down_out   )
