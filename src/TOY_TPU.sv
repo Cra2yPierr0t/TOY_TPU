@@ -6,22 +6,20 @@ module TOY_TPU #(
         input   logic   clk
     );
 
-    wire [7:0] top_in[0:COLUMN_NUMBER-1];
-    wire [7:0] left_in[0:ROW_NUMBER-1];
-    wire [7:0] down_out[0:COLUMN_NUMBER-1];
+    logic [7:0] top_in[0:COLUMN_NUMBER-1];
+    logic [7:0] left_in[0:ROW_NUMBER-1];
+    logic [7:0] down_out[0:COLUMN_NUMBER-1];
 
     logic [7:0] size_row_A;
     logic [7:0] size_column_B;
     logic [7:0] size_columnrow_AB;
 
-    wire    [8:0] compute_complete;
-    wire    [8:0] fetch_complete;
-
     logic reset;
     logic through;
 
     logic [7:0] A_cache[0:ROW_NUMBER-1][0:COLUMN_NUMBER-1];
-    logic [7:0] B_cache[0:SIZE_MATRIX-1][0:COLUMN_NUMBER-1];
+    logic [7:0] B_cache[0:ROW_NUMBER-1][0:COLUMN_NUMBER-1];
+    logic [7:0] C_cache[0:ROW_NUMBER-1][0:COLUMN_NUMBER-1];
 
     array #(
             .ROW_NUMBER     (ROW_NUMBER     ),
@@ -35,46 +33,47 @@ module TOY_TPU #(
             .down_out   (down_out   )
         );
     
-    always_comb begin
-        compute_complete = size_columnrow_AB + size_row_A + size_column_B - 1;
-        fetch_complete = compute_complete + size_row_A; //これは嘘
-    end
-
     reg [31:0] clk_cnt = 32'h0000_0000;
     always_ff @(posedge clk) begin
-        clk_cnt <= clk_cnt + 1;
-        if(clk_cnt == compute_complete) begin
-            through <= 1;
-        end else if(clk_cnt == fetch_complete) begin
-            done <= 1;
+        if(size_column_B + size_columnrow_AB + SIZE_MATRIX < clk_cnt) begin
+            clk_cnt = 32'h0000_0000;
+        end else begin
+            clk_cnt <= clk_cnt + 1;
         end
     end
 
     genvar i;
+    logic [7:0] C_cache_index;
 
     generate
         always_ff @(posedge clk) begin
-            if(cnt == 1) begin
+            if(clk_cnt == 1) begin
                 reset = 0;
             end
         end
         for(i = 0; i < SIZE_MATRIX; i = i + 1) begin: GenerateInput
             always_ff @(posedge clk) begin
-                if(((i+1) <= cnt) && (cnt <= (i+size_columnrow_AB))) begin
-                    top_in[i]   = A_cache[i][cnt - (i+1)];
-                    left_in[i]  = B_cache[i][cnt - (i+1)];
+                if(((i+1) <= clk_cnt) && (clk_cnt <= (i+size_columnrow_AB))) begin
+                    left_in[i]  = A_cache[i][clk_cnt - (i+1)];
+                    top_in[i]   = B_cache[clk_cnt - (i+1)][i];
                 end else begin
-                    top_in[i]   = 0;
                     left_in[i]  = 0;
+                    top_in[i]   = 0;
                 end
             end
         end
-        always_ff @(posedge clk) begin
-            if(SIZE_MATRIX+size_columnrow_AB-1 < cnt) begin
-                through = 1;
-            end else begin
-                through = 0;
-            end
-        end
     endgenerate
+
+    always_ff @(posedge clk) begin
+        if((size_column_B + size_columnrow_AB < clk_cnt) && (clk_cnt <= size_column_B + size_columnrow_AB + SIZE_MATRIX - size_row_A)) begin
+            through <= 1;
+            C_cache_index <= 0;
+        end else if((size_column_B + size_columnrow_AB - size_row_A + SIZE_MATRIX < clk_cnt) && (clk_cnt <= size_column_B + size_columnrow_AB + SIZE_MATRIX)) begin
+            through <= 1;
+            C_cache[C_cache_index] <= down_out;
+            C_cache_index <= C_cache_index + 1;
+        end else begin
+            through <= 0;
+        end
+    end
 endmodule
