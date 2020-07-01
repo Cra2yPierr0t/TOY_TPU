@@ -3,7 +3,8 @@ module TOY_TPU #(
         parameter   ROW_NUMBER    = 4,
         parameter   COLUMN_NUMBER = 4
     )(
-        input   logic   clk
+        input   logic   clk,
+        input   logic   activate_plz
     );
 
     logic [7:0] top_in[0:COLUMN_NUMBER-1];
@@ -24,6 +25,23 @@ module TOY_TPU #(
 // verilator lint_off BLKANDNBLK
     logic [31:0] clk_cnt = 32'h0000_0000;
 // verilator lint_on BLKANDNBLK
+
+    logic activate_clk = 0;
+    logic activate = 0;
+
+    always_ff @(posedge activate_plz) begin
+        if(!(size_column_B + size_columnrow_AB + SIZE_MATRIX + 1< clk_cnt)) begin
+            activate <= 1;
+        end
+    end
+
+    always_comb begin
+        if(activate) begin
+            activate_clk = clk;
+        end else begin
+            activate_clk = 0;
+        end
+    end
 
     initial begin
         A_cache[0][0] = 1;
@@ -46,7 +64,7 @@ module TOY_TPU #(
             .ROW_NUMBER     (ROW_NUMBER     ),
             .COLUMN_NUMBER  (COLUMN_NUMBER  )
         ) array (
-            .clk        (clk        ),
+            .clk        (activate_clk),
             .reset      (reset      ),
             .through    (through    ),
             .top_in     (top_in     ),
@@ -55,9 +73,10 @@ module TOY_TPU #(
         );
 
     
-    always_ff @(posedge clk) begin
-        if(size_column_B + size_columnrow_AB + SIZE_MATRIX + 1< clk_cnt) begin
+    always_ff @(posedge activate_clk) begin
+        if(size_column_B + size_columnrow_AB + SIZE_MATRIX + 1 < clk_cnt) begin
             clk_cnt <= 32'h0000_0000;
+            activate <= 0;
         end else begin
             clk_cnt <= clk_cnt + 1;
         end
@@ -67,13 +86,14 @@ module TOY_TPU #(
     logic [7:0] C_cache_index;
 
     generate
-        always_ff @(posedge clk) begin
+        always_ff @(posedge activate_clk) begin
             if(clk_cnt == 1) begin
+                C_cache_index <= 0;
                 reset = 0;
             end
         end
         for(i = 0; i < SIZE_MATRIX; i = i + 1) begin: GenerateInput
-            always_ff @(posedge clk) begin
+            always_ff @(posedge activate_clk) begin
                 if(((i+1) <= clk_cnt) && (clk_cnt <= (i+size_columnrow_AB))) begin
                     left_in[i]  = A_cache[i][clk_cnt - (i+1)];
                     top_in[i]   = B_cache[clk_cnt - (i+1)][i];
@@ -85,7 +105,7 @@ module TOY_TPU #(
         end
     endgenerate
 
-    always_ff @(posedge clk) begin
+    always_ff @(posedge activate_clk) begin
         if((size_column_B + size_columnrow_AB < clk_cnt) && (clk_cnt <= size_column_B + size_columnrow_AB + SIZE_MATRIX - size_row_A + 1)) begin
             through <= 1;
             C_cache_index <= size_row_A - 1;

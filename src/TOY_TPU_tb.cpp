@@ -14,6 +14,7 @@ int main(int argc, char **argv){
     tfp->open("wave.vcd");
 
     top->clk = 0;
+    top->activate_plz = 0;
     
     while(!Verilated::gotFinish()){
         if((main_time % 2) == 0)
@@ -21,6 +22,9 @@ int main(int argc, char **argv){
 
         top->eval();
         tfp->dump(main_time);
+
+        if(main_time == 10)
+            top->activate_plz = 1;
 
         if(main_time > 10000)
             break;
