@@ -14,12 +14,33 @@ module TOY_TPU #(
     logic [7:0] size_column_B;
     logic [7:0] size_columnrow_AB;
 
-    logic reset;
-    logic through;
+    logic reset = 1; //tmp
+    logic through = 0;
 
     logic [7:0] A_cache[0:ROW_NUMBER-1][0:COLUMN_NUMBER-1];
     logic [7:0] B_cache[0:ROW_NUMBER-1][0:COLUMN_NUMBER-1];
     logic [7:0] C_cache[0:ROW_NUMBER-1][0:COLUMN_NUMBER-1];
+
+// verilator lint_off BLKANDNBLK
+    logic [31:0] clk_cnt = 32'h0000_0000;
+// verilator lint_on BLKANDNBLK
+
+    initial begin
+        A_cache[0][0] = 1;
+        A_cache[0][1] = 2;
+        A_cache[0][2] = 3;
+        A_cache[1][0] = 4;
+        A_cache[1][1] = 5;
+        A_cache[1][2] = 6;
+
+        B_cache[0][0] = 7;
+        B_cache[1][0] = 8;
+        B_cache[2][0] = 9;
+
+        size_row_A = 2;
+        size_column_B = 1;
+        size_columnrow_AB = 3;
+    end
 
     array #(
             .ROW_NUMBER     (ROW_NUMBER     ),
@@ -32,11 +53,11 @@ module TOY_TPU #(
             .left_in    (left_in    ),
             .down_out   (down_out   )
         );
+
     
-    reg [31:0] clk_cnt = 32'h0000_0000;
     always_ff @(posedge clk) begin
-        if(size_column_B + size_columnrow_AB + SIZE_MATRIX < clk_cnt) begin
-            clk_cnt = 32'h0000_0000;
+        if(size_column_B + size_columnrow_AB + SIZE_MATRIX + 1< clk_cnt) begin
+            clk_cnt <= 32'h0000_0000;
         end else begin
             clk_cnt <= clk_cnt + 1;
         end
@@ -65,13 +86,13 @@ module TOY_TPU #(
     endgenerate
 
     always_ff @(posedge clk) begin
-        if((size_column_B + size_columnrow_AB < clk_cnt) && (clk_cnt <= size_column_B + size_columnrow_AB + SIZE_MATRIX - size_row_A)) begin
+        if((size_column_B + size_columnrow_AB < clk_cnt) && (clk_cnt <= size_column_B + size_columnrow_AB + SIZE_MATRIX - size_row_A + 1)) begin
             through <= 1;
-            C_cache_index <= 0;
-        end else if((size_column_B + size_columnrow_AB - size_row_A + SIZE_MATRIX < clk_cnt) && (clk_cnt <= size_column_B + size_columnrow_AB + SIZE_MATRIX)) begin
+            C_cache_index <= size_row_A - 1;
+        end else if((size_column_B + size_columnrow_AB - size_row_A + SIZE_MATRIX + 1< clk_cnt) && (clk_cnt <= size_column_B + size_columnrow_AB + SIZE_MATRIX + 1)) begin
             through <= 1;
             C_cache[C_cache_index] <= down_out;
-            C_cache_index <= C_cache_index + 1;
+            C_cache_index <= C_cache_index - 1;
         end else begin
             through <= 0;
         end

@@ -11,11 +11,10 @@ module PE(
     logic   [7:0] top_in_r;
     logic   [7:0] left_in_r;
 
-    logic   [7:0] w_mem;    //wire to local memory
+    //logic   [7:0] w_mem;    //wire to local memory
     logic   [7:0] mem;      //local memory
 
     always_comb begin
-        w_mem = (top_in_r * left_in_r) + mem;          
         if(through) begin
             down_out = mem;
         end else begin
@@ -31,7 +30,7 @@ module PE(
             mem         = top_in;
         end else begin
             {top_in_r, left_in_r} = {top_in, left_in};
-            mem         = w_mem;
+            mem = (top_in * left_in) + mem;          
         end
     end
 endmodule
