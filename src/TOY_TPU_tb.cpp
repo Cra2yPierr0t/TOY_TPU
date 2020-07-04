@@ -25,6 +25,9 @@ int main(int argc, char **argv){
 
         if(main_time == 10)
             top->activate_plz = 1;
+        
+        if(main_time == 14)
+            top->activate_plz = 0;
 
         if(main_time > 10000)
             break;

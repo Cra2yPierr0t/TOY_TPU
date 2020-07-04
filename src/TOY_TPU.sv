@@ -29,14 +29,20 @@ module TOY_TPU #(
     logic activate_clk = 0;
     logic activate = 0;
 
-    always_ff @(posedge activate_plz) begin
-        if(!(size_column_B + size_columnrow_AB + SIZE_MATRIX + 1< clk_cnt)) begin
-            activate <= 1;
+    logic flag = 0;
+
+    always_ff @(posedge clk) begin          //ここ最悪
+        if(clk_cnt == 32'h0000_0000) begin
+            activate = 0;
+        end if(activate_plz) begin
+            activate = 1;
+        end else begin
+            activate = activate;
         end
     end
 
     always_comb begin
-        if(activate) begin
+        if(activate == 1) begin
             activate_clk = clk;
         end else begin
             activate_clk = 0;
@@ -76,7 +82,6 @@ module TOY_TPU #(
     always_ff @(posedge activate_clk) begin
         if(size_column_B + size_columnrow_AB + SIZE_MATRIX + 1 < clk_cnt) begin
             clk_cnt <= 32'h0000_0000;
-            activate <= 0;
         end else begin
             clk_cnt <= clk_cnt + 1;
         end
